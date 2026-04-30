@@ -40,5 +40,21 @@ public class AccountService {
         return accountRepository.save(account);
 
     }
+ public Account withdraw(Long accountId, BigDecimal amount){
+     Account account = accountRepository.findById(accountId)
+             .orElseThrow(() -> new RuntimeException("Hesap bulunamadı!"));
 
+
+     if (account.getBalance().compareTo(amount) < 0) {
+         throw new RuntimeException("Yetersiz bakiye!");
+     }
+     BigDecimal newBalance = account.getBalance().subtract(amount);
+     account.setBalance(newBalance);
+
+     return accountRepository.save(account);
+ }
+ public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
+        this.withdraw(fromAccountId,amount);
+        this.deposit(toAccountId,amount);
+ }
 }

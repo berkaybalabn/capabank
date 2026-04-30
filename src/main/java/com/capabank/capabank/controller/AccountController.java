@@ -30,4 +30,13 @@ public class AccountController {
 
         return accountService.deposit(accountId, amount);
     }
+    @PutMapping("/{accountId}/withdraw")
+    public Account withdraw(@PathVariable Long accountId, @RequestParam BigDecimal amount){
+
+        return accountService.withdraw(accountId,amount);
+    }
+    @PutMapping("/{fromAccountId}/transfer/{toAccountId}")
+    public void transfer(@PathVariable Long fromAccountId, @PathVariable Long toAccountId,@RequestParam BigDecimal amount ){
+         accountService.transfer (fromAccountId,toAccountId,amount);
+    }
 }
