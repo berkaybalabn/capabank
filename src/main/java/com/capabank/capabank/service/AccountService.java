@@ -2,19 +2,25 @@ package com.capabank.capabank.service;
 
 import com.capabank.capabank.model.Account;
 import com.capabank.capabank.model.Customer;
+import com.capabank.capabank.model.Transaction;
+import com.capabank.capabank.model.TransactionType;
 import com.capabank.capabank.repository.AccountRepository;
 import com.capabank.capabank.repository.CustomerRepository;
+import com.capabank.capabank.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 
 @Service
-public class AccountService {
 
+public class AccountService {
+    private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
 
-    public AccountService(AccountRepository accountRepository, CustomerRepository customerRepository) {
+    public AccountService(TransactionRepository transactionRepository, AccountRepository accountRepository, CustomerRepository customerRepository) {
+        this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
     }
@@ -35,8 +41,14 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Hesap bulunamadı!"));
 
         BigDecimal newBalance = account.getBalance().add(amount);
-        account.setBalance(newBalance); //
-
+        account.setBalance(newBalance);
+        Transaction transaction = Transaction.builder()
+                .toAccountId(accountId)
+                .amount(amount)
+                .type(TransactionType.DEPOSIT)
+                .timestamp(LocalDateTime.now())
+                .build();
+        transactionRepository.save(transaction);
         return accountRepository.save(account);
 
     }
@@ -50,11 +62,26 @@ public class AccountService {
      }
      BigDecimal newBalance = account.getBalance().subtract(amount);
      account.setBalance(newBalance);
-
+     Transaction transaction = Transaction.builder()
+             .fromAccountId(accountId)
+             .amount(amount)
+             .type(TransactionType.WITHDRAW)
+             .timestamp(LocalDateTime.now())
+             .build();
+     transactionRepository.save(transaction);
      return accountRepository.save(account);
  }
  public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
         this.withdraw(fromAccountId,amount);
         this.deposit(toAccountId,amount);
+
+        Transaction transaction = Transaction.builder()
+                .toAccountId(toAccountId)
+                .fromAccountId(fromAccountId)
+                .amount(amount)
+                .type(TransactionType.TRANSFER)
+                .timestamp(LocalDateTime.now())
+                .build();
+        transactionRepository.save(transaction);
  }
 }
